@@ -1,9 +1,10 @@
 from __future__ import division
 from __future__ import print_function
 from carveme.reconstruction.utils import medium_to_constraints
-from framed.model.transformation import disconnected_metabolites
-from framed.solvers import solver_instance
-from framed.solvers.solver import VarType, Status
+from reframed.core.transformation import disconnected_metabolites
+from reframed.solvers import solver_instance
+from reframed.solvers.solver import VarType
+from reframed.solvers.solution import Status
 
 
 def gapFill(model, universe, constraints=None, min_growth=0.1, scores=None, inplace=True, bigM=1e3, abstol=1e-9,

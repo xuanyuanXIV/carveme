@@ -2,7 +2,7 @@ from __future__ import division
 from builtins import zip
 import pandas as pd
 import numpy as np
-from framed import load_cbmodel
+from reframed import load_cbmodel
 #from framed import NET, TVA
 from math import sqrt
 

@@ -5,11 +5,17 @@ import numpy as np
 import warnings
 import pandas as pd
 
-from framed.cobra.ensemble import EnsembleModel, save_ensemble
-from framed.io.sbml import parse_gpr_rule, save_cbmodel
-from framed.model.transformation import disconnected_metabolites
-from framed.solvers import solver_instance
-from framed.solvers.solver import VarType, Status
+# from framed.cobra.ensemble import EnsembleModel, save_ensemble
+# from framed.io.sbml import parse_gpr_rule, save_cbmodel
+# from framed.model.transformation import disconnected_metabolites
+# from framed.solvers import solver_instance
+# from framed.solvers.solver import VarType, Status
+
+from reframed.io.sbml import parse_gpr_rule, save_cbmodel
+from reframed.core.transformation import disconnected_metabolites
+from reframed.solvers import solver_instance
+from reframed.solvers.solver import VarType
+from reframed.solvers.solution import Status
 
 
 def inactive_reactions(model, solution):
@@ -99,8 +105,8 @@ def minmax_reduction(model, scores, min_growth=0.1, min_atpm=0.1, eps=1e-3, bigM
         solver._carveme_flag = True
 
         biomass = model.biomass_reaction
-        solver.add_constraint('min_growth', {biomass: 1}, '>', min_growth, update_problem=False)
-        solver.add_constraint('min_atpm', {'R_ATPM': 1}, '>', min_atpm, update_problem=False)
+        solver.add_constraint('min_growth', {biomass: 1}, '>', min_growth, update=False)
+        solver.add_constraint('min_atpm', {'R_ATPM': 1}, '>', min_atpm, update=False)
 
         solver.neg_vars = []
         solver.pos_vars = []
@@ -108,37 +114,37 @@ def minmax_reduction(model, scores, min_growth=0.1, min_atpm=0.1, eps=1e-3, bigM
         for r_id in reactions:
             if model.reactions[r_id].lb is None or model.reactions[r_id].lb < 0:
                 y_r = 'yr_' + r_id
-                solver.add_variable(y_r, 0, 1, vartype=VarType.BINARY, update_problem=False)
+                solver.add_variable(y_r, 0, 1, vartype=VarType.BINARY, update=False)
                 solver.neg_vars.append(y_r)
             if model.reactions[r_id].ub is None or model.reactions[r_id].ub > 0:
                 y_f = 'yf_' + r_id
-                solver.add_variable(y_f, 0, 1, vartype=VarType.BINARY, update_problem=False)
+                solver.add_variable(y_f, 0, 1, vartype=VarType.BINARY, update=False)
                 solver.pos_vars.append(y_f)
 
         if uptake_score != 0:
             for r_id in model.reactions:
                 if r_id.startswith('R_EX'):
-                    solver.add_variable('y_' + r_id, 0, 1, vartype=VarType.BINARY, update_problem=False)
+                    solver.add_variable('y_' + r_id, 0, 1, vartype=VarType.BINARY, update=False)
 
         solver.update()
 
         for r_id in reactions:
             y_r, y_f = 'yr_' + r_id, 'yf_' + r_id
             if y_r in solver.neg_vars and y_f in solver.pos_vars:
-                solver.add_constraint('lb_' + r_id, {r_id: 1, y_f: -eps, y_r: bigM}, '>', 0, update_problem=False)
-                solver.add_constraint('ub_' + r_id, {r_id: 1, y_f: -bigM, y_r: eps}, '<', 0, update_problem=False)
-                solver.add_constraint('rev_' + r_id, {y_f: 1, y_r: 1}, '<', 1, update_problem=False)
+                solver.add_constraint('lb_' + r_id, {r_id: 1, y_f: -eps, y_r: bigM}, '>', 0, update=False)
+                solver.add_constraint('ub_' + r_id, {r_id: 1, y_f: -bigM, y_r: eps}, '<', 0, update=False)
+                solver.add_constraint('rev_' + r_id, {y_f: 1, y_r: 1}, '<', 1, update=False)
             elif y_f in solver.pos_vars:
-                solver.add_constraint('lb_' + r_id, {r_id: 1, y_f: -eps}, '>', 0, update_problem=False)
-                solver.add_constraint('ub_' + r_id, {r_id: 1, y_f: -bigM}, '<', 0, update_problem=False)
+                solver.add_constraint('lb_' + r_id, {r_id: 1, y_f: -eps}, '>', 0, update=False)
+                solver.add_constraint('ub_' + r_id, {r_id: 1, y_f: -bigM}, '<', 0, update=False)
             elif y_r in solver.neg_vars:
-                solver.add_constraint('lb_' + r_id, {r_id: 1, y_r: bigM}, '>', 0, update_problem=False)
-                solver.add_constraint('ub_' + r_id, {r_id: 1, y_r: eps}, '<', 0, update_problem=False)
+                solver.add_constraint('lb_' + r_id, {r_id: 1, y_r: bigM}, '>', 0, update=False)
+                solver.add_constraint('ub_' + r_id, {r_id: 1, y_r: eps}, '<', 0, update=False)
 
         if uptake_score != 0:
             for r_id in model.reactions:
                 if r_id.startswith('R_EX'):
-                    solver.add_constraint('lb_' + r_id, {r_id: 1, 'y_' + r_id: bigM}, '>', 0, update_problem=False)
+                    solver.add_constraint('lb_' + r_id, {r_id: 1, 'y_' + r_id: bigM}, '>', 0, update=False)
 
         solver.update()
 
@@ -270,61 +276,61 @@ def carve_model(model, reaction_scores, outputfile=None, flavor=None, inplace=Tr
     return model
 
 
-def build_ensemble(model, reaction_scores, size, outputfile=None, flavor=None, init_env=None):
-    """ Reconstruct a model ensemble using the CarveMe approach.
+# def build_ensemble(model, reaction_scores, size, outputfile=None, flavor=None, init_env=None):
+#     """ Reconstruct a model ensemble using the CarveMe approach.
 
-    Args:
-        model (CBModel): universal model
-        reaction_scores (dict): reaction scores
-        size (int): ensemble size
-        outputfile (str): write model to SBML file (optional)
-        flavor (str): SBML flavor ('cobra' or 'fbc2', optional)
-        init_env (Environment): initialize final model with given Environment (optional)
+#     Args:
+#         model (CBModel): universal model
+#         reaction_scores (dict): reaction scores
+#         size (int): ensemble size
+#         outputfile (str): write model to SBML file (optional)
+#         flavor (str): SBML flavor ('cobra' or 'fbc2', optional)
+#         init_env (Environment): initialize final model with given Environment (optional)
 
-    Returns:
-        EnsembleModel: reconstructed ensemble
-    """
+#     Returns:
+#         EnsembleModel: reconstructed ensemble
+#     """
 
-    scores = dict(reaction_scores[['reaction', 'normalized_score']].values)
-    unscored = [r_id for r_id in model.reactions if r_id not in scores and not r_id.startswith('R_EX')]
-    logstd = np.std(np.log([x for x in scores.values() if x > 0]))
+#     scores = dict(reaction_scores[['reaction', 'normalized_score']].values)
+#     unscored = [r_id for r_id in model.reactions if r_id not in scores and not r_id.startswith('R_EX')]
+#     logstd = np.std(np.log([x for x in scores.values() if x > 0]))
 
-    reaction_status = {r_id: [] for r_id in model.reactions}
-    solver = solver_instance(model)
-    failed = 0
+#     reaction_status = {r_id: [] for r_id in model.reactions}
+#     solver = solver_instance(model)
+#     failed = 0
 
-    for i in range(size):
-        random_scores = -np.exp(logstd * np.random.randn(len(unscored)))
-        all_scores = dict(zip(unscored, random_scores))
-        all_scores.update(scores)
+#     for i in range(size):
+#         random_scores = -np.exp(logstd * np.random.randn(len(unscored)))
+#         all_scores = dict(zip(unscored, random_scores))
+#         all_scores.update(scores)
 
-        sol = minmax_reduction(model, all_scores, solver=solver)
+#         sol = minmax_reduction(model, all_scores, solver=solver)
 
-        if sol.status == Status.OPTIMAL:
-            for r_id in model.reactions:
-                active = (abs(sol.values[r_id]) >= 1e-6
-                          or (sol.values.get('yf_' + r_id, 0) > 0.5)
-                          or (sol.values.get('yr_' + r_id, 0) > 0.5))
-                reaction_status[r_id].append(active)
-        else:
-            failed += 1
+#         if sol.status == Status.OPTIMAL:
+#             for r_id in model.reactions:
+#                 active = (abs(sol.values[r_id]) >= 1e-6
+#                           or (sol.values.get('yf_' + r_id, 0) > 0.5)
+#                           or (sol.values.get('yr_' + r_id, 0) > 0.5))
+#                 reaction_status[r_id].append(active)
+#         else:
+#             failed += 1
 
-    ensemble_size = size - failed
-    ensemble = EnsembleModel(model, ensemble_size, reaction_status)
-    ensemble.simplify()
+#     ensemble_size = size - failed
+#     ensemble = EnsembleModel(model, ensemble_size, reaction_status)
+#     ensemble.simplify()
 
-    for i, row in reaction_scores.iterrows():
-        r_id = row['reaction']
-        if r_id in ensemble.model.reactions:
-            gpr = parse_gpr_rule(row['GPR'])
-            ensemble.model.reactions[r_id].set_gpr_association(gpr)
+#     for i, row in reaction_scores.iterrows():
+#         r_id = row['reaction']
+#         if r_id in ensemble.model.reactions:
+#             gpr = parse_gpr_rule(row['GPR'])
+#             ensemble.model.reactions[r_id].set_gpr_association(gpr)
 
-    if init_env:
-        init_env.apply(ensemble.model, inplace=True, warning=False)
+#     if init_env:
+#         init_env.apply(ensemble.model, inplace=True, warning=False)
 
-    if outputfile:
-        cleanup_metadata(ensemble.model)
-        save_ensemble(ensemble, outputfile, flavor=flavor)
+#     if outputfile:
+#         cleanup_metadata(ensemble.model)
+#         save_ensemble(ensemble, outputfile, flavor=flavor)
 
 
 def cleanup_metadata(model):

@@ -9,9 +9,10 @@ with open('README.rst') as readme_file:
     readme = readme_file.read()
 
 requirements = [
-    "framed>=0.5",
+    "reframed>=1.0.0",
     "pandas>=0.20.0",
-    "requests>=2.18"
+    "requests>=2.18",
+    "future>=0.18.2",
 ]
 
 script_list = [
@@ -38,7 +39,7 @@ included_files = {
 
 setup(
     name='carveme',
-    version='1.2.2',
+    version='1.2.3rc0',
     description="CarveMe: automated metabolic model reconstruction",
     long_description=readme,
     author="Daniel Machado, Sergej Andrejev",

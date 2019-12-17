@@ -2,9 +2,9 @@ from future import standard_library
 standard_library.install_aliases()
 import os
 from configparser import ConfigParser
-from framed import set_default_solver, set_default_parameter, Parameter
-
-__version__ = '1.2.2'
+# from framed import set_default_solver, set_default_parameter, Parameter
+from reframed.solvers import set_default_solver, set_default_parameter, Parameter
+__version__ = '1.2.3rc0'
 
 project_dir = os.path.abspath(os.path.dirname(__file__)) + '/'
 

@@ -10,7 +10,7 @@ from carveme.universe.bigg_download import build_bigg_universe_model, download_m
 from carveme.universe.curation import curate_universe
 from carveme.universe.thermodynamics import compute_bigg_gibbs_energy
 from carveme.reconstruction.utils import load_biomass_db
-from framed.io.sbml import load_cbmodel
+from reframed.io.sbml import load_cbmodel
 
 
 def main(mode, noheuristics=False, nothermo=False, allow_unbalanced=False, allow_blocked=False,

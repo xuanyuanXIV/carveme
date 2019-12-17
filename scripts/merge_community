@@ -3,8 +3,8 @@
 from __future__ import print_function
 import argparse
 import os
-from framed import load_cbmodel, save_cbmodel, Environment
-from framed.community.model import Community
+from reframed import load_cbmodel, save_cbmodel, Environment
+from reframed.community.model import Community
 from carveme import config, project_dir
 from carveme.reconstruction.utils import load_media_db
 

@@ -4,9 +4,9 @@ from collections import OrderedDict
 from warnings import warn
 
 import pandas as pd
-from framed import Environment
-from framed import CBReaction
-from framed.experimental.elements import molecular_weight
+from reframed import Environment
+from reframed import CBReaction
+from reframed.core.elements import molecular_weight
 import numpy as np
 
 

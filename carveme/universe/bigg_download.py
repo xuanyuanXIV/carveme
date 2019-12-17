@@ -7,9 +7,8 @@ import requests
 import pandas as pd
 import sys
 
-from framed import CBModel, CBReaction, Metabolite, Compartment
-from framed import save_cbmodel
-from framed.io.sbml import parse_gpr_rule
+from reframed import CBModel, CBReaction, Metabolite, Compartment
+from reframed.io.sbml import parse_gpr_rule, save_cbmodel
 
 
 base_url = 'http://bigg.ucsd.edu/api/v2/'
